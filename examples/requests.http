@@ -1,0 +1,58 @@
+### 原料登记 ###
+POST http://127.0.0.1:8000/materials
+Content-Type: application/json
+
+{
+  "lot_no": "RM-MILK-01",
+  "material_name": "蛋奶液",
+  "allergens": ["乳", "蛋"]
+}
+
+### 登记批次（完整声明 -> 放行）###
+POST http://127.0.0.1:8000/batches
+Content-Type: application/json
+
+{
+  "batch_no": "DEMO-B1",
+  "line_code": "L1",
+  "material_lots": ["RM-MILK-01"],
+  "declared_allergens": ["MILK", "EGG"],
+  "cleaning": []
+}
+
+### 登记批次（清洁只清除 MILK，EGG 残留未声明 -> 扣留）###
+POST http://127.0.0.1:8000/batches
+Content-Type: application/json
+
+{
+  "batch_no": "DEMO-B2",
+  "line_code": "L1",
+  "material_lots": ["RM-WATER-01"],
+  "declared_allergens": [],
+  "cleaning": ["MILK"]
+}
+
+### 更正清洁核验（追加 EGG，级联重算）###
+PUT http://127.0.0.1:8000/batches/2
+Content-Type: application/json
+
+{
+  "cleaning": ["MILK", "EGG"]
+}
+
+### 历史裁决版本 ###
+GET http://127.0.0.1:8000/batches/2/history
+
+### 原料批号主数据更正（补登过敏原，跨产线重算）###
+PUT http://127.0.0.1:8000/materials/RM-WATER-01
+Content-Type: application/json
+
+{
+  "allergens": ["SOY"]
+}
+
+### 原料更正审计 ###
+GET http://127.0.0.1:8000/materials/RM-WATER-01/corrections
+
+### 产线状态 ###
+GET http://127.0.0.1:8000/lines/L1

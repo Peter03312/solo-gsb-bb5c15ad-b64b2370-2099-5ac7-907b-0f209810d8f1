@@ -1,0 +1,27 @@
+services:
+  allergen-release:
+    build: .
+    image: allergen-release:latest
+    container_name: allergen-release
+    ports:
+      # 宿主机端口可用环境变量 ALLERGEN_PUBLIC_PORT 覆盖，默认 8000
+      - "${ALLERGEN_PUBLIC_PORT:-8000}:8000"
+    environment:
+      # 容器内数据库文件位置（挂载到命名卷持久化）
+      ALLERGEN_DB_PATH: /data/allergen.db
+      ALLERGEN_HOST: 0.0.0.0
+      ALLERGEN_PORT: "8000"
+      ALLERGEN_DEFAULT_LINE: "${ALLERGEN_DEFAULT_LINE:-L1}"
+    volumes:
+      - allergen_data:/data
+    restart: unless-stopped
+    healthcheck:
+      # python:3.12-slim 无 curl，使用标准库探活
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  allergen_data:
